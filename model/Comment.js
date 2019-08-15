@@ -59,6 +59,13 @@ const validateComment = comment => {
 	});
 }
 
+    // Comment.create({
+    //         author: "5d4cef8f1b5dce1e08953c99",
+    //         content: '出师表，不错的',
+    //         post: '5d52328988c7f83b808738fc',
+    //         state: 1,
+    //         createAt: 2019 - 08 - 30
+    //     })
 // 导出模块成员
 module.exports = {
 	Comment,

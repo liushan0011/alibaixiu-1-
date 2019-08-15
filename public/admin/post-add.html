@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="utf-8">
   <title>Add new post &laquo; Admin</title>
@@ -9,6 +10,7 @@
   <link rel="stylesheet" href="../assets/css/admin.css">
   <script src="../assets/vendors/nprogress/nprogress.js"></script>
 </head>
+
 <body>
   <script>NProgress.start()</script>
 
@@ -28,23 +30,26 @@
       <!-- <div class="alert alert-danger">
         <strong>错误！</strong>发生XXX错误
       </div> -->
-      <form class="row">
+      <form class="row" id="pForm">
         <div class="col-md-9">
           <div class="form-group">
             <label for="title">标题</label>
             <input id="title" class="form-control input-lg" name="title" type="text" placeholder="文章标题">
           </div>
           <div class="form-group">
-            <label for="content">标题</label>
-            <textarea id="content" class="form-control input-lg" name="content" cols="30" rows="10" placeholder="内容"></textarea>
+            <label for="content">文章内容</label>
+            <textarea id="content" class="form-control input-lg" name="content" cols="30" rows="10"
+              placeholder="内容"></textarea>
           </div>
         </div>
         <div class="col-md-3">
           <div class="form-group">
             <label for="feature">特色图像</label>
             <!-- show when image chose -->
-            <img class="help-block thumbnail" style="display: none">
+            <img class="help-block thumbnail" style="display: none" id="prev">
             <input id="feature" class="form-control" name="feature" type="file">
+            <!-- 隐藏域 就为是保存上传图片的地址 -->
+            <input type="hidden" name="thumbnail" id="thumbnail">
           </div>
           <div class="form-group">
             <label for="category">所属分类</label>
@@ -55,17 +60,17 @@
           </div>
           <div class="form-group">
             <label for="created">发布时间</label>
-            <input id="created" class="form-control" name="created" type="datetime-local">
+            <input id="created" class="form-control" name="createAt" type="datetime-local">
           </div>
           <div class="form-group">
             <label for="status">状态</label>
-            <select id="status" class="form-control" name="status">
-              <option value="drafted">草稿</option>
-              <option value="published">已发布</option>
+            <select id="status" class="form-control" name="state">
+              <option value="0">草稿</option>
+              <option value="1">已发布</option>
             </select>
           </div>
           <div class="form-group">
-            <button class="btn btn-primary" type="submit">保存</button>
+            <button class="btn btn-primary" type="button" id="pAdd">保存</button>
           </div>
         </div>
       </form>
@@ -111,6 +116,69 @@
 
   <script src="../assets/vendors/jquery/jquery.js"></script>
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
+  <!-- 引入模板引擎 -->
+  <script src="../assets/vendors/art-template/template-web.js"></script>
+  <script type="text/html" id="categoryTpl">
+    {{each data}}
+    <option value="{{@$value._id}}">{{$value.title}}</option>
+    {{/each}}
+  </script>
+  <script>
+    // 先发送ajax请求将所有的分类取出来 通过模板引擎渲染到页面
+    // 向服务器端发送请求 获取文章分类数据
+    $.ajax({
+      url: '/categories',
+      type: 'get',
+      success: function (response) {
+        var html = template('categoryTpl', { data: response });
+        $('#category').html(html);
+      }
+    })
+
+    $('#feature').on('change', function () {
+      var fileData = this.files[0];
+      // 图片是二进制数据 ajax它本身不支持二进制数据上传
+      var formData = new FormData();
+      formData.append('file', fileData);
+      // 发送ajax
+      $.ajax({
+        type: 'post',
+        url: '/upload',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (res) {
+          // 将数据保存到隐藏域 是为了将数据添加到集合中  隐藏域是一个表单标签 
+          $('#thumbnail').val(res[0].file);
+          // 当我们文件上传成功后 在客户端将其预览出来
+          $('#prev').attr('src', res[0].file).show();
+        }
+      })
+    });
+
+
+    // 完成添加文章的功能 
+    $('#pAdd').on('click', function () {
+      console.log($('#pForm').serialize());
+      //return;
+      $.ajax({
+        type: 'post',
+        url: '/posts',
+        data: $('#pForm').serialize(),
+        success: function (res) {
+          // 需要跳转到展示文章的列表页
+          location.href = "/admin/posts.html";
+        },
+        error: function (err) {
+          console.log(err);
+        }
+
+      })
+    })
+
+
+  </script>
   <script>NProgress.done()</script>
 </body>
+
 </html>

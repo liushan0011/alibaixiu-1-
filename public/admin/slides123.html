@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
   <meta charset="utf-8">
   <title>Slides &laquo; Admin</title>
@@ -10,7 +9,6 @@
   <link rel="stylesheet" href="../assets/css/admin.css">
   <script src="../assets/vendors/nprogress/nprogress.js"></script>
 </head>
-
 <body>
   <script>NProgress.start()</script>
 
@@ -32,18 +30,17 @@
       </div> -->
       <div class="row">
         <div class="col-md-4">
-          <form id="slidesForm">
+          <form>
             <h2>添加新轮播内容</h2>
             <div class="form-group">
               <label for="image">图片</label>
               <!-- show when image chose -->
               <img class="help-block thumbnail" style="display: none">
               <input id="image" class="form-control" name="image" type="file">
-              <input type="hidden" name="image" id="file">
             </div>
             <div class="form-group">
               <label for="text">文本</label>
-              <input id="text" class="form-control" name="title" type="text" placeholder="文本">
+              <input id="text" class="form-control" name="text" type="text" placeholder="文本">
             </div>
             <div class="form-group">
               <label for="link">链接</label>
@@ -65,7 +62,7 @@
               </tr>
             </thead>
             <tbody>
-              <!-- <tr>
+              <tr>
                 <td class="text-center"><img class="slide" src="../uploads/slide_1.jpg"></td>
                 <td>XIU功能演示</td>
                 <td>#</td>
@@ -80,7 +77,7 @@
                 <td class="text-center">
                   <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
                 </td>
-              </tr> -->
+              </tr>
             </tbody>
           </table>
         </div>
@@ -127,102 +124,6 @@
 
   <script src="../assets/vendors/jquery/jquery.js"></script>
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
-  <script src="../assets/vendors/art-template/template-web.js"></script>
-  <!-- 轮播图列表模板 -->
-  <script type="text/html" id="slidesTpl">
-    {{each data}}
-    <tr>
-      <td class="text-center"><img class="slide" src="{{$value.image}}"></td>
-      <td>{{$value.title}}</td>
-      <td>{{$value.link}}</td>
-      <td class="text-center">
-        <a href="javascript:;" class="btn btn-danger btn-xs delete" data-id="{{$value._id}}">删除</a>
-      </td>
-    </tr>
-    {{/each}}
-  </script>
-  <script>
-    // 当管理员选择文件的时候
-    $('#image').on('change', function () {
-      // 用户选择到的文件
-      var file = this.files[0];
-      // console.log(file);
-      // 创建formData对象实现二进制文件上传
-      var formData = new FormData();
-      // 将管理员选择到的文件添加到formData对象中
-      formData.append('image', file);
-      // 向服务器端发送请求 实现图片上传
-      $.ajax({
-        type: 'post',
-        url: '/upload',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function (response) {
-          console.log(response[0].image)
-          $('#file').val(response[0].image)
-        }
-      })
-    });
-
-    var sArr = [];
-
-    // 当轮播图表单发生提交行为时
-    $('#slidesForm').on('submit', function () {
-      // 获取管理员在表单中输入的内容
-      var formData = $(this).serialize();
-      // 向服务器端发送请求 添加轮播图数据
-      $.ajax({
-        type: 'post',
-        url: '/slides',
-        data: formData,
-        success: function (res) {
-          sArr.push(res);
-          render();
-        }
-      })
-      // 阻止表单默认提交行为
-      return false;
-    })
-
-    // 向服务器端发送请求 索要图片轮播列表数据
-    $.ajax({
-      type: 'get',
-      url: '/slides',
-      success: function (response) {
-        sArr = response;
-        render();
-
-      }
-    })
-
-
-    function render() {
-      var html = template('slidesTpl', { data: sArr });
-      $('tbody').html(html);
-    }
-
-    // 当删除按钮被点击时
-    $('tbody').on('click', '.delete', function () {
-      if (confirm('您真的要进行删除操作吗')) {
-        // 获取管理员要删除的轮播图数据id
-        var id = $(this).attr('data-id');
-        // 向服务器发送请求 实现轮播数据删除功能
-        $.ajax({
-          type: 'delete',
-          url: '/slides/' + id,
-          success: function (res) {
-            var index = sArr.findIndex(item=>item._id == id);
-            sArr.splice(index,1);
-            render();
-          }
-        })
-      }
-    });
-
-
-  </script>
   <script>NProgress.done()</script>
 </body>
-
 </html>

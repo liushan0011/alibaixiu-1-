@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="utf-8">
   <title>Posts &laquo; Admin</title>
@@ -9,6 +10,7 @@
   <link rel="stylesheet" href="../assets/css/admin.css">
   <script src="../assets/vendors/nprogress/nprogress.js"></script>
 </head>
+
 <body>
   <script>NProgress.start()</script>
 
@@ -29,21 +31,19 @@
         <!-- show when multiple checked -->
         <a class="btn btn-danger btn-sm" href="javascript:;" style="display: none">批量删除</a>
         <form class="form-inline">
-          <select name="" class="form-control input-sm">
-            <option value="">所有分类</option>
+          <select name="category" class="form-control input-sm" id="allCategories">
+            <option value="all" >所有分类</option>
           </select>
-          <select name="" class="form-control input-sm">
-            <option value="">所有状态</option>
-            <option value="">草稿</option>
-            <option value="">已发布</option>
+          <select name="state" class="form-control input-sm" id="s">
+            <option value="all">所有状态</option>
+            <option value="0">草稿</option>
+            <option value="1">已发布</option>
           </select>
-          <button class="btn btn-default btn-sm">筛选</button>
+          <button class="btn btn-default btn-sm" type="button" id="cSearch">筛选</button>
         </form>
-        <ul class="pagination pagination-sm pull-right">
+        <ul class="pagination pagination-sm pull-right" id="page">
           <li><a href="#">上一页</a></li>
           <li><a href="#">1</a></li>
-          <li><a href="#">2</a></li>
-          <li><a href="#">3</a></li>
           <li><a href="#">下一页</a></li>
         </ul>
       </div>
@@ -59,39 +59,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>随便一个名称</td>
-            <td>小小</td>
-            <td>潮科技</td>
-            <td class="text-center">2016/10/07</td>
-            <td class="text-center">已发布</td>
-            <td class="text-center">
-              <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
-              <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
-            </td>
-          </tr>
-          <tr>
-            <td>随便一个名称</td>
-            <td>小小</td>
-            <td>潮科技</td>
-            <td class="text-center">2016/10/07</td>
-            <td class="text-center">已发布</td>
-            <td class="text-center">
-              <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
-              <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
-            </td>
-          </tr>
-          <tr>
-            <td>随便一个名称</td>
-            <td>小小</td>
-            <td>潮科技</td>
-            <td class="text-center">2016/10/07</td>
-            <td class="text-center">已发布</td>
-            <td class="text-center">
-              <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
-              <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
-            </td>
-          </tr>
+          
         </tbody>
       </table>
     </div>
@@ -134,8 +102,89 @@
     </ul>
   </div>
 
-  <script src="../assets/vendors/jquery/jquery.js"></script>
+  <script src="../assets/vendors/jquery/jquery.min.js"></script>
   <script src="../assets/vendors/bootstrap/js/bootstrap.js"></script>
+  <script src="../assets/vendors/art-template/template-web.js"></script>
+
+  <!-- //文章列表模板 -->
+  <script type="text/html" id="pTpl">
+    {{each records}}
+    <tr>
+        <td>{{$value.title}}</td>
+        <td>{{$value.author.nickName}}</td>
+        <td>{{$value.category.title}}</td>
+        <td class="text-center">{{$imports.formateDate($value.createAt)}}</td>
+        <td class="text-center">{{$value.state == 0 ? '草稿' : '已发布'}}</td>
+        <td class="text-center">
+          <a href="javascript:;" class="btn btn-default btn-xs">编辑</a>
+          <a href="javascript:;" class="btn btn-danger btn-xs">删除</a>
+        </td>
+      </tr>
+      {{/each}}
+  </script>
+  <!-- 所有分类模板 -->
+  <script type="text/html" id="categoriesTpl">
+    {{each data}}
+    <option value="">{{$value.title}}</option>
+    {{/each}}
+  </script>
+
+  <script>
+    var c = $('#allCategories').val();
+    var s = $('#s').val();
+    // 发送ajax将服务器给我们数据渲染到模板上面 
+    // $.ajax({
+    //   type: 'get',
+    //   url: '/posts',
+    //   success: function (res) {
+    //     var html = template('pTpl', res);
+    //     $('tbody').html(html);
+    //   }
+    // });
+    function render(c = "all", s = "all", page = 1) {
+        $.ajax({
+            type: 'get',
+            url: '/posts',
+            data: {
+                page: page || 1, //分页页码
+                category: c, // 分类名称
+                state: s // 状态 
+            },
+            success: function(res) {
+                console.log(res);
+                var html = template('pTpl', res)
+                $('tbody').html(html);
+                // 把当前页码赋值给window对象下面的下面属性叫currentPage
+                window.currentPage = res.page
+                var page = template('pageTpl', res);
+                $('#page').html(page);
+            }
+        })
+    }
+    render();
+    function formateDate(date) {
+      // 将日期时间字符串转换成日期对象
+      date = new Date(date);
+      return date.getFullYear() + '-' + (date.getMonth() + 1).toString().padStart(2,0) + '-' + date.getDate().toString().padStart(2,0)
+    }
+    //获取分类
+    $.ajax({
+      url: '/categories',
+      type: 'get',
+      success: function(r){
+        var html = template('categoriesTpl',{data:r})
+        $('#allCategories').append(html)
+      }
+    })
+    
+    //筛选功能
+    $('#cSearch').on('click',function(){
+      c = $('#allCategories').val();
+      s = $('#s').val();
+      render(c ,s)
+    })
+  </script>
   <script>NProgress.done()</script>
 </body>
+
 </html>

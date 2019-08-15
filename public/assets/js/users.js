@@ -1,10 +1,10 @@
 // 主要是用于操作用户的 
 var userArr = new Array();
-// 将用户列表展示出来 
+// 展示用户列表
 $.ajax({
     type:'get',
     url:'/users',
-    success:function(res){
+    success:function(res){   
         userArr = res;
         render(userArr);
     }
@@ -12,22 +12,20 @@ $.ajax({
 
 // 用于调用template方法 
 function render(arr){   
-   var str =  template('userTpl',{
-        list:arr
-    });
-    // console.log(str);
+   var str =  template('userTpl',{list:arr});
     $('tbody').html(str);
 }
 
 // 添加用户功能 
 $('#userAdd').on('click',function(){
-    // console.log($('#userForm').serialize());
+    // console.log($('#userForm').serialize()); 获取表单的所有值 
+    // avatar=&email=itcast%40qq.com&nickName=aaaaa&password=123456&status=0&role=admin
     // return;
     $.ajax({
-        url:'/users',
-        type:'post',
-        data:$('#userForm').serialize(),
-        success:function(res){
+        url: '/users',
+        type: 'post',
+        data: $('#userForm').serialize(),
+        success: function(r){
             userArr.push(res);
             render(userArr);
         }
@@ -36,11 +34,9 @@ $('#userAdd').on('click',function(){
 
 // 当用户选择文件的时候
 $('#avatar').on('change', function () {
-	// 用户选择到的文件
-	// this.files[0]
+	// 用户选择到的文件   this.files[0]
 	var formData = new FormData();
 	formData.append('avatar', this.files[0]);
-
 	$.ajax({
 		type: 'post',
 		url: '/upload',
@@ -58,18 +54,14 @@ $('#avatar').on('change', function () {
 	})
 });
 
-
 var userId;
 // 编辑用户功能 
 $('tbody').on('click','.edit',function(){
     // 保存当前被修改的这个用户的id
     userId = $(this).parent().attr('data-id');
-
     $('#userForm > h2').text('修改用户');
-
    // 先获取 当前被点击这个元素的祖先 叫tr 
     var trObj = $(this).parents('tr');
-
     // 获取图片的地址
     var imgSrc = trObj.children().eq(1).children('img').attr('src');
     // 将图片的地址写入到隐藏域 
@@ -140,5 +132,63 @@ $('#userEdit').on('click',function(){
         }
     });
 });
+
+//删除用户功能 
+$('tbody').on('click','.delete',function(){
+    if(window.confirm('真删啊？？')){
+    var id = $(this).parent().attr('data-id');
+    $.ajax({
+        utl: '/users/'+id,
+        type: 'get',
+        success: function(r){
+            // console.log(r);
+            var index = userArr.findIndex(item=>item._id==id);
+            userArr.splice(index,1);
+            render(userArr)
+            
+        }
+    });
+    }
+});
+
+//全选按钮
+$('#selectAll').on('click',function(){
+    var status = $('#selectAll').prop('checked');
+    $('tbody input').prop('checked',status);
+});
+$('tbody').on('click','input',function(){
+    if($('tbody input').length == $('tbody input:checked').length) {
+        $('#selectAll').prop('checked',true);
+    } else {
+        $('#selectAll').prop('checked',false);
+    }
+    //显示隐藏批量删除
+    if($('tbody input:checked').length > 1) {
+        $('.btn-sm').show();
+    } else {
+        $('.btn-sm').hide();
+    }
+});
+// 给批量删除按钮注册点击事件 
+$('.btn-sm').on('click',function(){
+    var ids = [];
+    var checkUser = $('tbody input:checked');  // [input, input]
+    checkUser.each(function(k,v){
+        var id = v.parentNode.parentNode.children[6].getAttribute('data-id');
+        ids.push(id);  
+    });
+    $.ajax({
+        type: 'delete',
+        url: '/users/' + ids.join('-'),
+        success: function (r) {  //r是这一个数组,数组里面放的被删除的元素,元素是一个对象 
+            r.forEach(element => {
+                var index = userArr.findIndex(item => item._id == element._id);
+                userArr.splice(index, 1);
+                render(userArr);
+            });
+        }
+    })
+});
+
 
 
